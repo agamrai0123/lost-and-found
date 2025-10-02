@@ -1,43 +1,59 @@
 package pkg
 
 import (
-	"fmt"
 	"html/template"
+	"sync"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog"
 )
 
 type service struct {
 	templateCache map[string]*template.Template
 	isProduction  bool
+	router        *gin.Engine
+	logger        zerolog.Logger
+	usersMu       sync.RWMutex
+	users         map[string]*user
+	basePath      string
+	// db            *sql.DB
 }
 
 func newService() *service {
-	tc, err := CreateTemplateCache()
+	if err := readConfiguration(); err != nil {
+		panic(err)
+	}
+	tc, err := createTemplateCache()
 	if err != nil {
 		panic(err)
 	}
-	return &service{
-		templateCache: tc,
-		isProduction:  true,
-	}
-}
 
-func StartService() {
-	gin.SetMode(gin.DebugMode) // Change to gin.DebugMode for development
-
-	service := newService()
+	// Initialize Gin router
+	gin.SetMode(gin.DebugMode)
 	router := gin.Default()
-
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 
 	router.Static("/static", "./web/static")
 	router.LoadHTMLGlob("./web/templates/*.tmpl")
-	service.routes(router)
 
-	fmt.Println("Starting server on :8080")
-	if err := router.Run(":8080"); err != nil {
-		fmt.Printf("Server failed to start: %v\n", err)
+	return &service{
+		templateCache: tc,
+		isProduction:  true,
+		router:        router,
+		logger:        getLogger(AppConfig.ServiceName),
+		users:         make(map[string]*user),
+		basePath:      "/api/v1",
+	}
+}
+
+func StartService() {
+	s := newService()
+	home := s.router.Group(s.basePath)
+	s.routes(home)
+
+	s.logger.Info().Msg("Starting server on :8080")
+	if err := s.router.Run(":8080"); err != nil {
+		s.logger.Fatal().Err(err).Msg("Server failed to start")
 	}
 }

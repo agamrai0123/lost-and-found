@@ -16,6 +16,7 @@ type (
 	}
 	configuration struct {
 		Version      string  `mapstructure:"version,omitempty"`
+		ServiceName  string  `mapstructure:"service_name"`
 		Logging      logging `mapstructure:"logging"`
 		ServerPort   string  `mapstructure:"server_port"`
 		IsProduction bool    `mapstructure:"is_production,omitempty"`
@@ -26,7 +27,7 @@ var (
 	AppConfig configuration
 )
 
-func ReadConfiguration() error {
+func readConfiguration() error {
 	viper.SetConfigName("config")
 	viper.SetConfigType("json")
 	viper.AddConfigPath("./config")

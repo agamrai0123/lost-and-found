@@ -1,0 +1,36 @@
+{{define "signup"}}
+{{block "title" .}}Sign Up - LostAndFound{{end}}
+
+{{block "css" .}}
+<link rel="stylesheet" href="/static/css/signup.css">
+{{end}}
+
+{{block "content" .}}
+<h1>Sign up</h1>
+{{if .Flash}}<div class="flash">{{.Flash}}</div>{{end}}
+<form method="POST" action="{{.BasePath}}/signup">
+    <label for="fullname">Full name:</label>
+    <input type="text" id="fullname" name="fullname" required>
+
+    <label for="email">Email:</label>
+    <input type="email" id="email" name="email" required>
+
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" required>
+
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" required>
+
+    <label for="confirm">Confirm password:</label>
+    <input type="password" id="confirm" name="confirm" required>
+
+    <button type="submit">Sign up</button>
+</form>
+
+<p>Already have an account? <a href="{{.BasePath}}/login">Login</a></p>
+{{end}}
+
+{{block "script" .}}
+<script src="/static/js/signup.js"></script>
+{{end}}
+{{end}}

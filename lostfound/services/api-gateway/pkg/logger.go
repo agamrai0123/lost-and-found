@@ -12,7 +12,7 @@ import (
 
 var oncelog sync.Once
 
-func GetLogger() zerolog.Logger {
+func getLogger(serviceName string) zerolog.Logger {
 	oncelog.Do(func() {
 		zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
 		zerolog.TimeFieldFormat = time.RFC3339Nano
@@ -29,11 +29,11 @@ func GetLogger() zerolog.Logger {
 			Level(zerolog.Level(AppConfig.Logging.Level)).
 			With().
 			Timestamp().
-			Str("service", "validate_session").
+			Str("service", serviceName).
 			Logger()
 
 		log.Logger = logger
-		log.Info().Msg("logger started for validate_session")
+		log.Info().Msg("logger started for " + serviceName)
 	})
 
 	return log.Logger

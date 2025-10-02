@@ -15,7 +15,7 @@ func (s *service) renderTemplate(c *gin.Context, tmpl string, data interface{}) 
 
 	if !s.isProduction {
 		// Rebuild cache in dev mode for hot-reloading
-		s.templateCache, err = CreateTemplateCache()
+		s.templateCache, err = createTemplateCache()
 		if err != nil {
 			log.Printf("cannot create template cache: %v", err)
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
@@ -36,7 +36,7 @@ func (s *service) renderTemplate(c *gin.Context, tmpl string, data interface{}) 
 	}
 }
 
-func CreateTemplateCache() (map[string]*template.Template, error) {
+func createTemplateCache() (map[string]*template.Template, error) {
 	cache := map[string]*template.Template{}
 	pages, err := filepath.Glob("./web/templates/*.page.tmpl")
 	if err != nil {
