@@ -1,0 +1,10 @@
+go 1.25.1
+
+use (
+	./services/api-gateway
+	./services/auth
+	./services/chat
+	./services/items
+	./services/match
+	./services/media
+)
