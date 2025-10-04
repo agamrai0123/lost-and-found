@@ -1,2 +1,7 @@
 {"level":"info","service":"api-gateway","time":"2025-10-02T23:59:54.6346484+05:30","message":"logger started for api-gateway"}
 {"level":"info","service":"api-gateway","time":"2025-10-02T23:59:54.6369803+05:30","message":"Starting server on :8080"}
+{"level":"info","service":"api-gateway","time":"2025-10-03T20:09:22.0759228+05:30","message":"logger started for api-gateway"}
+{"level":"info","service":"api-gateway","time":"2025-10-03T20:09:22.0781125+05:30","message":"starting server on :8080"}
+{"level":"info","service":"api-gateway","time":"2025-10-03T20:40:29.9037548+05:30","message":"shutdown signal received"}
+{"level":"info","service":"api-gateway","time":"2025-10-03T20:40:29.9037548+05:30","message":"attempting graceful shutdown"}
+{"level":"info","service":"api-gateway","time":"2025-10-03T20:40:29.9049434+05:30","message":"server stopped"}

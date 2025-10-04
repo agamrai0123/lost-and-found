@@ -5,58 +5,51 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
-// NewService returns an initialized Service or an error (no panics here).
-func NewService() (*service, error) {
+func NewItemService() (*ItemService, error) {
 	if err := readConfiguration(); err != nil {
 		return nil, err
 	}
 
-	tc, err := createTemplateCache()
-	if err != nil {
-		return nil, err
-	}
-
-	// set mode from config instead of hardcoding
 	mode := gin.DebugMode
-	if AppConfig.IsProduction {
-		mode = gin.ReleaseMode
-	}
-
 	gin.SetMode(mode)
 	router := gin.New()
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 
-	// static and templates setup
-	router.Static("/static", "./web/static")
-	// In production, you may want to use a prebuilt template set (from tc)
-	// and call router.SetHTMLTemplate(...) so Gin uses the parsed templates.
-	router.LoadHTMLGlob("./web/templates/*.tmpl")
+	s := &ItemService{
+		storePath: "data/posts.json",
+		imageDir:  "uploads", // directory to store uploaded images
+		router:    router,
+		logger:    getLogger(AppConfig.ServiceName),
+		posts:     make(map[string]*Post),
+		basePath:  "/api/v1",
+	}
 
-	svc := &service{
-		templateCache: tc,
-		isProduction:  AppConfig.IsProduction,
-		router:        router,
-		logger:        getLogger(AppConfig.ServiceName),
-		users:         make(map[string]*user),
-		basePath:      "/api/v1",
+	// load existing posts if file exists
+	if err := s.loadFromFile(); err != nil {
+		// If the file doesn't exist, that's fine — we'll create on first save.
+		if !errors.Is(err, os.ErrNotExist) {
+			return nil, fmt.Errorf("loading posts from file: %w", err)
+		}
+		s.logger.Warn().Msgf("posts file %q does not exist, starting fresh", s.storePath)
+	} else {
+		s.logger.Info().Msgf("loaded %d posts from %s", len(s.posts), s.storePath)
 	}
 
 	// register routes
-	home := svc.router.Group(svc.basePath)
-	svc.routes(home)
+	home := s.router.Group(s.basePath)
+	s.routes(home)
 
-	return svc, nil
+	return s, nil
 }
 
-// Start runs the HTTP server and returns when server stops or context cancels.
-// It supports graceful shutdown triggered by ctx cancellation.
-func (s *service) Start(ctx context.Context) error {
+func (s *ItemService) Start(ctx context.Context) error {
 	if s == nil {
 		return errors.New("service is nil")
 	}
@@ -71,7 +64,7 @@ func (s *service) Start(ctx context.Context) error {
 		Handler: s.router,
 	}
 
-	// run server in background
+	// run server
 	errCh := make(chan error, 1)
 	go func() {
 		s.logger.Info().Msgf("starting server on %s", addr)
@@ -81,7 +74,7 @@ func (s *service) Start(ctx context.Context) error {
 		close(errCh)
 	}()
 
-	// wait for ctx cancellation or server error
+	// wait for context done or listen error
 	select {
 	case <-ctx.Done():
 		s.logger.Info().Msg("shutdown signal received")
@@ -96,9 +89,7 @@ func (s *service) Start(ctx context.Context) error {
 		return err
 	}
 }
-
-// Shutdown gracefully shuts the HTTP server.
-func (s *service) Shutdown(ctx context.Context) error {
+func (s *ItemService) Shutdown(ctx context.Context) error {
 	if s == nil || s.httpServer == nil {
 		return nil
 	}
